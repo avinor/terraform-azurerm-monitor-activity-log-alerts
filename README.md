@@ -11,7 +11,7 @@ To create a monitor action group deployed with [tau](https://github.com/avinor/t
 
 ```terraform
 module {
-  source = "github.com/avinor/terraform-azurerm-montor-action-group"
+  source = "github.com/avinor/terraform-azurerm-monitor-activity-log-alerts"
 }
 
 inputs {

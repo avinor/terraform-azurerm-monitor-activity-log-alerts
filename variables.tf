@@ -38,9 +38,10 @@ variable "emails" {
 }
 
 variable "webhooks" {
-  description = "List of webhook receivers"
+  description = "List of webhook receivers. If key_vault_id is set service_uri is key vault secret name"
   type = list(object({
     name                    = string
+    key_vault_id            = string
     service_uri             = string
     use_common_alert_schema = bool
   }))
@@ -48,7 +49,7 @@ variable "webhooks" {
 }
 
 variable "activity_log_alerts" {
-  description = "Map of acivity log alerts"
+  description = "Map of activity log alerts"
   type = map(object({
     scopes            = list(string)
     description       = string
