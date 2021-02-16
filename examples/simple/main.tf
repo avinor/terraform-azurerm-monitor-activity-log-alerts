@@ -24,11 +24,13 @@ module "simple" {
     {
       name                    = "callmyapiaswell"
       service_uri             = "http://example.com/alert"
+      key_vault_id            = null
       use_common_alert_schema = true
     },
     {
       name                    = "callmy2apiaswell"
       service_uri             = "http://example.com/alert2"
+      key_vault_id            = null
       use_common_alert_schema = true
     },
   ]

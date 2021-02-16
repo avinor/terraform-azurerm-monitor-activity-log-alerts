@@ -3,11 +3,18 @@ terraform {
 }
 
 provider azurerm {
-  version = "~> 2.38.0"
+  version = "~> 2.45.1"
   features {}
 }
 
 locals {
+  key_vaults = { for w in var.webhooks : w.service_uri => w.key_vault_id if w.key_vault_id != null}
+}
+
+data "azurerm_key_vault_secret" "kvs" {
+  for_each = local.key_vaults
+  name         = each.key
+  key_vault_id = each.value
 }
 
 resource "azurerm_resource_group" "main" {
@@ -37,7 +44,7 @@ resource "azurerm_monitor_action_group" "main" {
     for_each = var.webhooks
     content {
       name                    = webhook_receiver.value.name
-      service_uri             = webhook_receiver.value.service_uri
+      service_uri             = webhook_receiver.value.key_vault_id == null ? webhook_receiver.value.service_uri : data.azurerm_key_vault_secret.kvs[webhook_receiver.value.service_uri].value
       use_common_alert_schema = webhook_receiver.value.use_common_alert_schema
     }
   }
