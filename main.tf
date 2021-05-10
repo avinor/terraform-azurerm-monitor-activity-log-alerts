@@ -195,7 +195,7 @@ resource "azurerm_monitor_action_group" "main" {
 
   logic_app_receiver {
     name                    = "${var.name}-la-action"
-    resource_id             = var.logic_app
+    resource_id             = azurerm_logic_app_workflow.la.id
     callback_url            = azurerm_logic_app_workflow.la.access_endpoint
     use_common_alert_schema = true
   }

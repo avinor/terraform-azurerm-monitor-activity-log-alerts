@@ -47,12 +47,6 @@ variable "webhooks" {
   })
 }
 
-variable "logic_app" {
-  description = "resource id for logic app"
-  type        = string
-  default     = null
-}
-
 variable "activity_log_alerts" {
   description = "Map of activity log alerts"
   type = map(object({
