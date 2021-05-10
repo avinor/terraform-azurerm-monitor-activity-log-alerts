@@ -33,49 +33,134 @@ resource "azurerm_logic_app_trigger_http_request" "request" {
 
   schema = <<SCHEMA
 {
-  "schemaId": "azureMonitorCommonAlertSchema",
-  "data": {
-    "essentials": {
-      "alertId": "/subscriptions/<subscription ID>/providers/Microsoft.AlertsManagement/alerts/b9569717-bc32-442f-add5-83a997729330",
-      "alertRule": "WCUS-R2-Gen2",
-      "severity": "Sev3",
-      "signalType": "Metric",
-      "monitorCondition": "Resolved",
-      "monitoringService": "Platform",
-      "alertTargetIDs": [
-        "/subscriptions/<subscription ID>/resourcegroups/pipelinealertrg/providers/microsoft.compute/virtualmachines/wcus-r2-gen2"
-      ],
-      "originAlertId": "3f2d4487-b0fc-4125-8bd5-7ad17384221e_PipeLineAlertRG_microsoft.insights_metricAlerts_WCUS-R2-Gen2_-117781227",
-      "firedDateTime": "2019-03-22T13:58:24.3713213Z",
-      "resolvedDateTime": "2019-03-22T14:03:16.2246313Z",
-      "description": "",
-      "essentialsVersion": "1.0",
-      "alertContextVersion": "1.0"
-    },
-    "alertContext": {
-      "properties": null,
-      "conditionType": "SingleResourceMultipleMetricCriteria",
-      "condition": {
-        "windowSize": "PT5M",
-        "allOf": [
-          {
-            "metricName": "Percentage CPU",
-            "metricNamespace": "Microsoft.Compute/virtualMachines",
-            "operator": "GreaterThan",
-            "threshold": "25",
-            "timeAggregation": "Average",
-            "dimensions": [
-              {
-                "name": "ResourceId",
-                "value": "3efad9dc-3d50-4eac-9c87-8b3fd6f97e4e"
-              }
-            ],
-            "metricValue": 7.727
-          }
-        ]
-      }
+    "type": "object",
+    "properties": {
+        "schemaId": {
+            "type": "string"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "essentials": {
+                    "type": "object",
+                    "properties": {
+                        "alertId": {
+                            "type": "string"
+                        },
+                        "alertRule": {
+                            "type": "string"
+                        },
+                        "severity": {
+                            "type": "string"
+                        },
+                        "signalType": {
+                            "type": "string"
+                        },
+                        "monitorCondition": {
+                            "type": "string"
+                        },
+                        "monitoringService": {
+                            "type": "string"
+                        },
+                        "alertTargetIDs": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "originAlertId": {
+                            "type": "string"
+                        },
+                        "firedDateTime": {
+                            "type": "string"
+                        },
+                        "resolvedDateTime": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "essentialsVersion": {
+                            "type": "string"
+                        },
+                        "alertContextVersion": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "alertContext": {
+                    "type": "object",
+                    "properties": {
+                        "properties": {},
+                        "conditionType": {
+                            "type": "string"
+                        },
+                        "condition": {
+                            "type": "object",
+                            "properties": {
+                                "windowSize": {
+                                    "type": "string"
+                                },
+                                "allOf": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "metricName": {
+                                                "type": "string"
+                                            },
+                                            "metricNamespace": {
+                                                "type": "string"
+                                            },
+                                            "operator": {
+                                                "type": "string"
+                                            },
+                                            "threshold": {
+                                                "type": "string"
+                                            },
+                                            "timeAggregation": {
+                                                "type": "string"
+                                            },
+                                            "dimensions": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "value"
+                                                    ]
+                                                }
+                                            },
+                                            "metricValue": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "required": [
+                                            "metricName",
+                                            "metricNamespace",
+                                            "operator",
+                                            "threshold",
+                                            "timeAggregation",
+                                            "dimensions",
+                                            "metricValue"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-  }
 }
 SCHEMA
 
