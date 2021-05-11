@@ -3,18 +3,13 @@ terraform {
 }
 
 provider azurerm {
-  version = "~> 2.45.1"
+  version = "~> 2.58.0"
   features {}
 }
 
-locals {
-  key_vaults = { for w in var.webhooks : w.service_uri => w.key_vault_id if w.key_vault_id != null}
-}
-
 data "azurerm_key_vault_secret" "kvs" {
-  for_each = local.key_vaults
-  name         = each.key
-  key_vault_id = each.value
+  name         = var.webhook.service_uri
+  key_vault_id = var.webhook.key_vault_id
 }
 
 resource "azurerm_resource_group" "main" {
@@ -22,6 +17,164 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 
   tags = var.tags
+}
+
+resource "azurerm_logic_app_workflow" "la" {
+  name                = "${var.name}-la-workflow"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  tags = var.tags
+}
+
+resource "azurerm_logic_app_trigger_http_request" "request" {
+  name         = "${var.name}-la-alert-trigger-http"
+  logic_app_id = azurerm_logic_app_workflow.la.id
+
+  schema = <<SCHEMA
+{
+    "type": "object",
+    "properties": {
+        "schemaId": {
+            "type": "string"
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "essentials": {
+                    "type": "object",
+                    "properties": {
+                        "alertId": {
+                            "type": "string"
+                        },
+                        "alertRule": {
+                            "type": "string"
+                        },
+                        "severity": {
+                            "type": "string"
+                        },
+                        "signalType": {
+                            "type": "string"
+                        },
+                        "monitorCondition": {
+                            "type": "string"
+                        },
+                        "monitoringService": {
+                            "type": "string"
+                        },
+                        "alertTargetIDs": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "originAlertId": {
+                            "type": "string"
+                        },
+                        "firedDateTime": {
+                            "type": "string"
+                        },
+                        "resolvedDateTime": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "essentialsVersion": {
+                            "type": "string"
+                        },
+                        "alertContextVersion": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "alertContext": {
+                    "type": "object",
+                    "properties": {
+                        "properties": {},
+                        "conditionType": {
+                            "type": "string"
+                        },
+                        "condition": {
+                            "type": "object",
+                            "properties": {
+                                "windowSize": {
+                                    "type": "string"
+                                },
+                                "allOf": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "metricName": {
+                                                "type": "string"
+                                            },
+                                            "metricNamespace": {
+                                                "type": "string"
+                                            },
+                                            "operator": {
+                                                "type": "string"
+                                            },
+                                            "threshold": {
+                                                "type": "string"
+                                            },
+                                            "timeAggregation": {
+                                                "type": "string"
+                                            },
+                                            "dimensions": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "value": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "name",
+                                                        "value"
+                                                    ]
+                                                }
+                                            },
+                                            "metricValue": {
+                                                "type": "number"
+                                            }
+                                        },
+                                        "required": [
+                                            "metricName",
+                                            "metricNamespace",
+                                            "operator",
+                                            "threshold",
+                                            "timeAggregation",
+                                            "dimensions",
+                                            "metricValue"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+SCHEMA
+
+}
+
+resource "azurerm_logic_app_action_http" "action" {
+  name         = "${var.name}-la-action"
+  logic_app_id = azurerm_logic_app_workflow.la.id
+  method       = "POST"
+  uri          = var.webhook.key_vault_id == null ? var.webhook.service_uri : data.azurerm_key_vault_secret.kvs.value
+  headers = {
+    "Content-type" = "application/json"
+  }
+  body = "{\"text\": \"A new message from Azure Service Health. Go to https://portal.azure.com/#blade/Microsoft_Azure_Health/AzureHealthBrowseBlade/serviceIssues\""
 }
 
 resource "azurerm_monitor_action_group" "main" {
@@ -40,14 +193,13 @@ resource "azurerm_monitor_action_group" "main" {
     }
   }
 
-  dynamic "webhook_receiver" {
-    for_each = var.webhooks
-    content {
-      name                    = webhook_receiver.value.name
-      service_uri             = webhook_receiver.value.key_vault_id == null ? webhook_receiver.value.service_uri : data.azurerm_key_vault_secret.kvs[webhook_receiver.value.service_uri].value
-      use_common_alert_schema = webhook_receiver.value.use_common_alert_schema
-    }
+  logic_app_receiver {
+    name                    = "${var.name}-la-action"
+    resource_id             = azurerm_logic_app_workflow.la.id
+    callback_url            = azurerm_logic_app_workflow.la.access_endpoint
+    use_common_alert_schema = true
   }
+
 }
 
 resource "azurerm_monitor_activity_log_alert" "main" {

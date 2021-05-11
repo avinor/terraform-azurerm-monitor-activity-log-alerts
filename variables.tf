@@ -37,15 +37,14 @@ variable "emails" {
   default = []
 }
 
-variable "webhooks" {
+variable "webhook" {
   description = "List of webhook receivers. If key_vault_id is set service_uri is key vault secret name"
-  type = list(object({
+  type = object({
     name                    = string
     key_vault_id            = string
     service_uri             = string
     use_common_alert_schema = bool
-  }))
-  default = []
+  })
 }
 
 variable "activity_log_alerts" {
