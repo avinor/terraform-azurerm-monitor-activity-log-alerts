@@ -1,9 +1,9 @@
 # Monitor Alert
 
 
-This module deploys an azure monitor action group and activity log alerts.
+This module deploys an Azure monitor action group and activity log alerts.
 
-Support for webhook and email revivers.
+Support for webhook via Logic Apps and email receivers.
 
 ## Usage
 
@@ -20,12 +20,12 @@ inputs {
   location            = "westeurope"
   short_name          = "Short Name"
 
-  webhooks = [
+  webhook = [
     {  
       name                    = "myalert"
       service_uri             = "https://examples.com"
       use_common_alert_schema = true
-    },
+    }
   ]
 
   activity_log_alerts = {
