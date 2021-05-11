@@ -20,13 +20,11 @@ inputs {
   location            = "westeurope"
   short_name          = "Short Name"
 
-  webhook = [
-    {  
-      name                    = "myalert"
-      service_uri             = "https://examples.com"
-      use_common_alert_schema = true
-    }
-  ]
+  webhook = {
+    name                    = "myalert"
+    service_uri             = "https://examples.com"
+    use_common_alert_schema = true
+  }
 
   activity_log_alerts = {
     "myname" = {
