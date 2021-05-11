@@ -37,7 +37,7 @@ variable "emails" {
   default = []
 }
 
-variable "webhooks" {
+variable "webhook" {
   description = "List of webhook receivers. If key_vault_id is set service_uri is key vault secret name"
   type = object({
     name                    = string

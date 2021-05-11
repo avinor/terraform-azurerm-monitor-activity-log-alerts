@@ -8,8 +8,8 @@ provider azurerm {
 }
 
 data "azurerm_key_vault_secret" "kvs" {
-  name         = var.webhooks.service_uri
-  key_vault_id = var.webhooks.key_vault_id
+  name         = var.webhook.service_uri
+  key_vault_id = var.webhook.key_vault_id
 }
 
 resource "azurerm_resource_group" "main" {
@@ -170,7 +170,7 @@ resource "azurerm_logic_app_action_http" "action" {
   name         = "${var.name}-la-action"
   logic_app_id = azurerm_logic_app_workflow.la.id
   method       = "POST"
-  uri          = var.webhooks.key_vault_id == null ? var.webhooks.service_uri : data.azurerm_key_vault_secret.kvs.value
+  uri          = var.webhook.key_vault_id == null ? var.webhook.service_uri : data.azurerm_key_vault_secret.kvs.value
   headers = {
     "Content-type" = "application/json"
   }
