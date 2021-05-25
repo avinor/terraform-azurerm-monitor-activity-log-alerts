@@ -179,7 +179,7 @@ resource "azurerm_logic_app_action_http" "action" {
   headers = {
     "Content-type" = "application/json"
   }
-  body = "{\"text\": \"A new message from Azure Service Health. Go to https://portal.azure.com/#blade/Microsoft_Azure_Health/AzureHealthBrowseBlade/serviceIssues\""
+  body = "{\"text\": \"A new message from Azure Service Health. Go to https://portal.azure.com/#blade/Microsoft_Azure_Health/AzureHealthBrowseBlade/serviceIssues\"}"
 }
 
 resource "azurerm_monitor_action_group" "main" {
