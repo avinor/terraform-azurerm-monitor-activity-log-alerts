@@ -219,6 +219,9 @@ resource "azurerm_monitor_activity_log_alert" "main" {
 
   criteria {
     category = each.value.criteria_category
+    service_health {
+      locations = each.value.criteria_locations
+    }
   }
 
   action {
