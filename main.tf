@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 2.58.0"
+      version = "~> 2.98.0"
     }
   }
 }
@@ -95,73 +95,7 @@ resource "azurerm_logic_app_trigger_http_request" "request" {
                 },
                 "alertContext": {
                     "type": "object",
-                    "properties": {
-                        "properties": {},
-                        "conditionType": {
-                            "type": "string"
-                        },
-                        "condition": {
-                            "type": "object",
-                            "properties": {
-                                "windowSize": {
-                                    "type": "string"
-                                },
-                                "allOf": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "metricName": {
-                                                "type": "string"
-                                            },
-                                            "metricNamespace": {
-                                                "type": "string"
-                                            },
-                                            "operator": {
-                                                "type": "string"
-                                            },
-                                            "threshold": {
-                                                "type": "string"
-                                            },
-                                            "timeAggregation": {
-                                                "type": "string"
-                                            },
-                                            "dimensions": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "name": {
-                                                            "type": "string"
-                                                        },
-                                                        "value": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "name",
-                                                        "value"
-                                                    ]
-                                                }
-                                            },
-                                            "metricValue": {
-                                                "type": "number"
-                                            }
-                                        },
-                                        "required": [
-                                            "metricName",
-                                            "metricNamespace",
-                                            "operator",
-                                            "threshold",
-                                            "timeAggregation",
-                                            "dimensions",
-                                            "metricValue"
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    "properties": {}
                 }
             }
         }
@@ -179,7 +113,20 @@ resource "azurerm_logic_app_action_http" "action" {
   headers = {
     "Content-type" = "application/json"
   }
-  body = "{\"text\": \"A new message from Azure Service Health. Go to https://portal.azure.com/#blade/Microsoft_Azure_Health/AzureHealthBrowseBlade/serviceIssues\"}"
+  body = <<-BODY
+  {
+      "username": "AzureHealth - Activity Log Alert",
+      "blocks": [
+          {
+              "type": "section",
+              "text": {
+                  "type": "mrkdwn",
+                  "text": "New Activity Log Alert: https://portal.azure.com/#blade/Microsoft_Azure_Health/AzureHealthBrowseBlade/serviceIssues\n\nDetails:\nMonitoring Service: @{triggerBody()?['data']?['essentials']?['monitoringService']}\nMonitoring Condition: @{triggerBody()?['data']?['essentials']?['monitorCondition']}\nDescription: @{triggerBody()?['data']?['essentials']?['description']}\nSignal Type: @{triggerBody()?['data']?['essentials']?['signalType']}\nSeverity: @{triggerBody()?['data']?['essentials']?['severity']}\nAlert Rule: @{triggerBody()?['data']?['essentials']?['alertRule']}\nAlert ID: @{triggerBody()?['data']?['essentials']?['alertId']}\nAlert Target IDs: @{triggerBody()?['data']?['essentials']?['alertTargetIDs']}\n"
+              }
+          }
+      ]
+  }
+  BODY
 }
 
 resource "azurerm_monitor_action_group" "main" {
@@ -201,7 +148,7 @@ resource "azurerm_monitor_action_group" "main" {
   logic_app_receiver {
     name                    = "${var.name}-la-action"
     resource_id             = azurerm_logic_app_workflow.la.id
-    callback_url            = azurerm_logic_app_workflow.la.access_endpoint
+    callback_url            = azurerm_logic_app_trigger_http_request.request.callback_url
     use_common_alert_schema = true
   }
 
@@ -219,8 +166,11 @@ resource "azurerm_monitor_activity_log_alert" "main" {
 
   criteria {
     category = each.value.criteria_category
-    service_health {
-      locations = each.value.criteria_locations
+    dynamic "service_health" {
+      for_each = each.value.criteria_category == "ServiceHealth" && each.value.criteria_locations != null ? [true] : []
+      content {
+        locations = each.value.criteria_locations
+      }
     }
   }
 
