@@ -3,17 +3,17 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.6.0"
+      version = "~> 3.28.0"
     }
   }
 }
 
-provider azurerm {
+provider "azurerm" {
   features {}
 }
 
 data "azurerm_key_vault_secret" "kvs" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app.webhook.key_vault_id != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app.webhook.key_vault_id != null }
 
   name         = each.value.action_group.logic_app.webhook.uri
   key_vault_id = each.value.action_group.logic_app.webhook.key_vault_id
@@ -27,7 +27,7 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_logic_app_workflow" "la" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name                = "${replace(each.key, "_", "-")}-la-workflow"
   location            = azurerm_resource_group.main.location
@@ -37,7 +37,7 @@ resource "azurerm_logic_app_workflow" "la" {
 }
 
 resource "azurerm_logic_app_trigger_http_request" "request" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name         = "${replace(each.key, "_", "-")}-la-alert-trigger-http"
   logic_app_id = azurerm_logic_app_workflow.la[each.key].id
@@ -46,14 +46,14 @@ resource "azurerm_logic_app_trigger_http_request" "request" {
 }
 
 resource "azurerm_logic_app_action_http" "action" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name         = "${replace(each.key, "_", "-")}-la-action"
   logic_app_id = azurerm_logic_app_workflow.la[each.key].id
   method       = "POST"
   uri          = each.value.action_group.logic_app.webhook.key_vault_id == null ? each.value.action_group.logic_app.webhook.uri : data.azurerm_key_vault_secret.kvs[each.key].value
   body         = each.value.action_group.logic_app.webhook.body
-  headers      = {
+  headers = {
     "Content-type" = "application/json"
   }
 }
