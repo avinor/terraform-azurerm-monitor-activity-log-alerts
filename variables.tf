@@ -14,17 +14,17 @@ variable "tags" {
 
 variable "activity_log_alerts" {
   description = "Map of activity log alerts"
-  type        = map(object({
-    scopes       = list(string)
-    description  = string
-    category     = string
-    regions      = list(string)
+  type = map(object({
+    scopes      = list(string)
+    description = string
+    category    = string
+    regions     = list(string)
     action_group = object({
       name         = string
       display_name = string
-      logic_app    = object({
+      logic_app = object({
         http_trigger_schema = string
-        webhook             = object({
+        webhook = object({
           key_vault_id = string
           uri          = string
           body         = string
