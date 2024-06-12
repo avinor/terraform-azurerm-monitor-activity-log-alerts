@@ -12,6 +12,17 @@ variable "tags" {
   default     = {}
 }
 
+variable "diagnostics" {
+  description = "Diagnostic settings for those resources that support it. See README.md for details on configuration."
+  type = object({
+    destination   = string
+    eventhub_name = optional(string)
+    logs          = list(string)
+    metrics       = list(string)
+  })
+  default = null
+}
+
 variable "activity_log_alerts" {
   description = "Map of activity log alerts"
   type = map(object({
