@@ -20,7 +20,7 @@ locals {
     event_hub_auth_id  = contains(local.diag_resource_list, "Microsoft.EventHub") ? var.diagnostics.destination : null
     metric             = var.diagnostics.metrics
     log                = var.diagnostics.logs
-  } : {
+    } : {
     log_analytics_id   = null
     storage_account_id = null
     event_hub_auth_id  = null
@@ -30,7 +30,7 @@ locals {
 }
 
 data "azurerm_key_vault_secret" "kvs" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app.webhook.key_vault_id != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app.webhook.key_vault_id != null }
 
   name         = each.value.action_group.logic_app.webhook.uri
   key_vault_id = each.value.action_group.logic_app.webhook.key_vault_id
@@ -44,7 +44,7 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_logic_app_workflow" "la" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name                = "${replace(each.key, "_", "-")}-la-workflow"
   location            = azurerm_resource_group.main.location
@@ -54,7 +54,7 @@ resource "azurerm_logic_app_workflow" "la" {
 }
 
 resource "azurerm_logic_app_trigger_http_request" "request" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name         = "${replace(each.key, "_", "-")}-la-alert-trigger-http"
   logic_app_id = azurerm_logic_app_workflow.la[each.key].id
@@ -63,12 +63,12 @@ resource "azurerm_logic_app_trigger_http_request" "request" {
 }
 
 resource "azurerm_logic_app_action_http" "action" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name         = "${replace(each.key, "_", "-")}-la-action"
   logic_app_id = azurerm_logic_app_workflow.la[each.key].id
   method       = "POST"
-  uri           = each.value.action_group.logic_app.webhook.key_vault_id == null ? each.value.action_group.logic_app.webhook.uri : data.azurerm_key_vault_secret.kvs[each.key].value
+  uri          = each.value.action_group.logic_app.webhook.key_vault_id == null ? each.value.action_group.logic_app.webhook.uri : data.azurerm_key_vault_secret.kvs[each.key].value
   body         = each.value.action_group.logic_app.webhook.body
   headers = {
     "Content-type" = "application/json"
@@ -127,7 +127,7 @@ resource "azurerm_monitor_activity_log_alert" "main" {
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.main[each.key].id
+    action_group_id    = azurerm_monitor_action_group.main[each.key].id
     webhook_properties = {}
   }
 }
@@ -137,7 +137,7 @@ data "azurerm_monitor_diagnostic_categories" "default" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "logic_app_diagnostics" {
-  for_each = {for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null}
+  for_each = { for k, v in var.activity_log_alerts : k => v if v.action_group.logic_app != null }
 
   name                           = "${replace(each.key, "_", "-")}-diagnostic-settings"
   target_resource_id             = azurerm_logic_app_workflow.la[each.key].id
