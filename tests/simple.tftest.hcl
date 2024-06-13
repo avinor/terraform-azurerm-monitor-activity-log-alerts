@@ -1,11 +1,9 @@
-module "simple" {
-  source = "../../"
-
+variables {
   resource_group_name = "simple-rg"
   location            = "westeurope"
 
   diagnostics = {
-    destination   = "fakeid"
+    destination   = "/subscriptions/12345678-1234-9876-4563-123456789012/resourceGroups/example-resource-group/providers/Microsoft.OperationalInsights/workspaces/workspaceValue"
     eventhub_name = null
     logs          = ["WorkflowRuntime"]
     metrics       = []
@@ -14,14 +12,14 @@ module "simple" {
 
   activity_log_alerts = {
     "recommendation" = {
-      scopes       = ["557184c6-b112-49b6-8e79-230fe3aee4f0"]
-      description  = "My description"
-      category     = "Recommendation"
-      regions      = null
+      scopes      = ["557184c6-b112-49b6-8e79-230fe3aee4f0"]
+      description = "My description"
+      category    = "Recommendation"
+      regions     = null
       action_group = {
         name         = "my-recommendations"
         display_name = "My Recommendations"
-        email        = {
+        email = {
           name                    = "sendtodevops"
           address                 = "devops@contoso.com"
           use_common_alert_schema = true
@@ -37,7 +35,7 @@ module "simple" {
               }
           }
           SCHEMA
-          webhook             = {
+          webhook = {
             key_vault_id = null
             uri          = "https://example.com/alert"
             body         = <<-BODY
@@ -50,15 +48,15 @@ module "simple" {
       }
     },
     "service_health" = {
-      scopes       = ["557184c6-b112-49b6-8e79-230fe3aee4f0"]
-      description  = "My description"
-      category     = "ServiceHealth"
-      regions      = ["North Europe", "West Europe"]
+      scopes      = ["557184c6-b112-49b6-8e79-230fe3aee4f0"]
+      description = "My description"
+      category    = "ServiceHealth"
+      regions     = ["North Europe", "West Europe"]
       action_group = {
         name         = "my-service-health"
         display_name = "My ServiceHealth"
         email        = null
-        logic_app    = {
+        logic_app = {
           http_trigger_schema = <<-SCHEMA
           {
               "type": "object",
@@ -69,7 +67,7 @@ module "simple" {
               }
           }
           SCHEMA
-          webhook             = {
+          webhook = {
             key_vault_id = null
             uri          = "https://example.com/alert2"
             body         = <<-BODY
@@ -81,5 +79,20 @@ module "simple" {
         }
       }
     },
+  }
+}
+run "simple" {
+  command = plan
+}
+run "test-logicapp-creation" {
+  command = plan
+
+  assert {
+    condition     = azurerm_monitor_diagnostic_setting.logic_app_diagnostics["recommendation"].name == "recommendation-diagnostic-settings"
+    error_message = " Name did not match expected"
+  }
+  assert {
+    condition     = length(azurerm_monitor_diagnostic_setting.logic_app_diagnostics) == 2
+    error_message = " Length did not match expected"
   }
 }
