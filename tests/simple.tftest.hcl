@@ -81,7 +81,7 @@ variables {
     },
   }
 }
-run "simple"{
+run "simple" {
   command = plan
 }
 run "test-logicapp-creation" {
